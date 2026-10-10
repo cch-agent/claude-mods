@@ -8,6 +8,6 @@ Claude Code mods（hooks plugins）。
 ## 安裝
 
 ```
-/plugin install grill-choices --marketplace <owner>/<repo>
-/plugin install handoff-button --marketplace <owner>/<repo>
+/plugin install grill-choices --marketplace cch-agent/claude-mods
+/plugin install handoff-button --marketplace cch-agent/claude-mods
 ```
