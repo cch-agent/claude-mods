@@ -1,0 +1,21 @@
+{
+  "name": "my-mods",
+  "owner": {
+    "name": "ChengHung"
+  },
+  "plugins": [
+    {
+      "name": "grill-choices",
+      "source": "./grill-choices",
+      "description": "grill-with-docs 的提問改用 AskUserQuestion 選擇題"
+    },
+    {
+      "name": "handoff-button",
+      "source": "./handoff-button",
+      "description": "context 70% 時出現交接按鈕：寫摘要、存檔、清空並送出"
+    }
+  ],
+  "metadata": {
+    "description": "個人 Claude Code mods"
+  }
+}

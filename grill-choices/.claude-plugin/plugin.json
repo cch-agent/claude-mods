@@ -1,0 +1,8 @@
+{
+  "name": "grill-choices",
+  "version": "0.1.0",
+  "description": "grill-with-docs 的提問改用 AskUserQuestion：選擇題，可選建議答案或自行輸入",
+  "author": {
+    "name": "ChengHung"
+  }
+}
