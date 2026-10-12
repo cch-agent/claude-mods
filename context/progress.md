@@ -65,3 +65,6 @@
 ## 2026-10-13（marketplace 改名 cch）
 - marketplace 名稱由 `my-mods` 改為 `cch`；README 安裝步驟改為 `marketplace add` + `<mod>@cch`。GitHub repo（cch-agent/claude-mods）與本機資料夾名稱未動。
 - 已安裝舊名的使用者需重裝：`/plugin uninstall <mod>@my-mods`、`/plugin marketplace remove my-mods`，再裝 `@cch`（settings.json 的 `enabledPlugins` 鍵名會跟著變）。
+
+## 2026-10-13（加入 MIT LICENSE 並改為 public）
+- 公開前掃描：無 secret／token／真實絕對路徑；已知 git 作者 email 會公開（使用者接受）。加入 MIT LICENSE（版權 ChengHung, 2026）。
