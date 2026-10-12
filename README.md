@@ -1,4 +1,4 @@
-# my-mods
+# cch
 
 Claude Code mods（hooks plugins）。
 
@@ -9,9 +9,11 @@ Claude Code mods（hooks plugins）。
 ## 安裝
 
 ```
-/plugin install grill-choices --marketplace cch-agent/claude-mods
-/plugin install ship --marketplace cch-agent/claude-mods
-/plugin install action-chips --marketplace cch-agent/claude-mods
+/plugin marketplace add cch-agent/claude-mods
+/plugin install grill-choices@cch
+/plugin install ship@cch
+/plugin install action-chips@cch
+/reload-plugins
 ```
 
-> 安裝指令的 `--marketplace cch-agent/claude-mods` 是 GitHub 來源；本機目錄來源的 marketplace 名稱為 `my-mods`，所以解除安裝用 `@my-mods`。
+> marketplace 名稱為 `cch`（見 `.claude-plugin/marketplace.json`），安裝與解除安裝都用 `@cch`。從舊名 `my-mods` 遷移：先 `/plugin uninstall <mod>@my-mods`、`/plugin marketplace remove my-mods`，再依上方步驟重裝。

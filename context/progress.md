@@ -61,3 +61,7 @@
 ## 2026-10-13（移除 context-buddy）
 - 決定：使用者要求刪除 context-buddy；目錄已 `git rm`（可由 git 還原），marketplace.json 與 README 同步移除。上方 context-buddy 相關紀錄保留作歷史。action-chips 內「與 context-buddy 相同」的註解僅為歷史說明，組合下層 band 的邏輯不變。
 - 若曾安裝：`/plugin uninstall context-buddy@my-mods` 再 `/reload-plugins`。
+
+## 2026-10-13（marketplace 改名 cch）
+- marketplace 名稱由 `my-mods` 改為 `cch`；README 安裝步驟改為 `marketplace add` + `<mod>@cch`。GitHub repo（cch-agent/claude-mods）與本機資料夾名稱未動。
+- 已安裝舊名的使用者需重裝：`/plugin uninstall <mod>@my-mods`、`/plugin marketplace remove my-mods`，再裝 `@cch`（settings.json 的 `enabledPlugins` 鍵名會跟著變）。
