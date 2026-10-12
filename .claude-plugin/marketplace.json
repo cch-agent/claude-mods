@@ -15,11 +15,6 @@
       "description": "/ship：驗證、獨立 review、確認 commit 訊息後 commit 並 push"
     },
     {
-      "name": "context-buddy",
-      "source": "./context-buddy",
-      "description": "Claude 娃娃：輸入框上方依 context 用量說話，段落結束時提示是否該開新 session"
-    },
-    {
       "name": "action-chips",
       "source": "./action-chips",
       "description": "回覆後在輸入列上方顯示小框框：檔案與網址點了開啟、指令點了複製"
