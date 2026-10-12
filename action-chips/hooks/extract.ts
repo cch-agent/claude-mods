@@ -5,7 +5,9 @@ export type Candidate = { kind: 'open' | 'copy'; target: string; isPath: boolean
 
 const SHELL_LANGS = new Set(['sh', 'bash', 'zsh', 'shell', 'console'])
 // 沒標語言的 code fence，第一行要像指令才算
-const CMD_HEAD = /^(!|cd|pnpm|npm|npx|yarn|bun|git|gh|claude|node|python3?|pip|curl|brew|wrangler|make|ls|cat|open|docker|kubectl)(\s|$)/
+const CMD_HEAD = /^(!|\/[a-z][\w:-]*|cd|pnpm|npm|npx|yarn|bun|git|gh|claude|node|python3?|pip|curl|brew|wrangler|make|ls|cat|open|docker|kubectl)(\s|$)/
+// slash command：`/plugin install x`（斜線開頭、後面有空白參數；單純的絕對路徑沒有空白）
+const SLASH_CMD = /^\/[a-z][\w:-]*\s+\S/
 // 網址只收 ASCII，遇到中文或全形標點就停
 const URL_RE = /https?:\/\/[\x21-\x7e]+/g
 
@@ -59,7 +61,7 @@ export function extract(text: string): Candidate[] {
   // 3. inline code：`! cmd` 是指令，像路徑的是檔案
   rest = rest.replace(/`([^`\n]+)`/g, (m, code: string, at: number) => {
     const s = code.trim()
-    if (/^!\s*\S/.test(s)) found.push({ at, c: { kind: 'copy', target: s, isPath: false } })
+    if (/^!\s*\S/.test(s) || SLASH_CMD.test(s)) found.push({ at, c: { kind: 'copy', target: s, isPath: false } })
     else if (/^https?:\/\//.test(s)) found.push({ at, c: { kind: 'open', target: s, isPath: false } })
     else if (looksLikePath(stripLine(s))) found.push({ at, c: { kind: 'open', target: stripLine(s), isPath: true } })
     return ' '.repeat(m.length)

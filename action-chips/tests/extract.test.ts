@@ -42,3 +42,12 @@ test('review 邊界：中文緊接網址、括號、無語言 fence、行號格�
   expect(extract('```console\n$ ls\nfile.txt\n```').map(c => c.target)).toEqual(['ls'])
   expect(extract('`src/a.ts:12-20` `b.md#sec`').map(c => c.target)).toEqual(['src/a.ts', 'b.md'])
 })
+
+test('slash command：code fence 與行內都算指令，絕對路徑不算', async () => {
+  const text = '```\n/plugin install action-chips --marketplace cch-agent/claude-mods\n```\n或輸入 `/reload-plugins now`，路徑 `/Users/a/b.ts`'
+  expect(extract(text).map(c => [c.kind, c.target])).toEqual([
+    ['copy', '/plugin install action-chips --marketplace cch-agent/claude-mods'],
+    ['copy', '/reload-plugins now'],
+    ['open', '/Users/a/b.ts'],
+  ])
+})

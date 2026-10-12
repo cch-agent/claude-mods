@@ -56,3 +56,4 @@
 - 中斷（isAborted）清空；回覆進行中（isWorking）隱藏；與 context-buddy 相同以 `next(e)` 組合下層 band，小框框在上。
 - 獨立 sonnet review 的高／中項已修；未做：兩輪 target 完全相同時舊標籤可能套用到新結果（影響小）、未閉合 code fence、巢狀 fence。
 - 測試 4 項通過。
+- 0.1.1：使用者回報 code fence 裡的 `/plugin install …` 沒出現框框。修正：slash command（斜線開頭且帶參數）在無語言 fence 與行內都算指令；只有一個字的 `/clear` 仍不收，以免把路由名稱（如 `/events`）誤當指令。

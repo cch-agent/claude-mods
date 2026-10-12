@@ -1,6 +1,6 @@
 {
   "name": "action-chips",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "回覆後在輸入列上方顯示可點的小框：檔案與網址點了開啟、指令點了複製",
   "types": "./types/index.d.ts",
   "author": {
