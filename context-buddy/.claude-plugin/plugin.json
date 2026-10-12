@@ -1,0 +1,9 @@
+{
+  "name": "context-buddy",
+  "version": "0.1.0",
+  "description": "Claude 娃娃：常駐在輸入框上方，依 context 用量說話，段落結束時提示是否該開新 session",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "ChengHung"
+  }
+}

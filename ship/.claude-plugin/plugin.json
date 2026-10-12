@@ -1,0 +1,8 @@
+{
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "/ship：驗證 → 獨立 sonnet code-review → 確認 commit 訊息 → commit → push，一個指令完成",
+  "author": {
+    "name": "ChengHung"
+  }
+}
