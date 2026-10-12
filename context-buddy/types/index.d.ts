@@ -1,4 +1,5 @@
 export type BuddyVerdict = { restart: boolean; tip: string }
+export type HandoffPhase = 'idle' | 'writing' | 'clearing'
 
 declare module 'claude-code' {
   interface PluginState {
@@ -10,6 +11,10 @@ declare module 'claude-code' {
       wrapUp: boolean
       /** 模型（或 null）給的判斷 */
       verdict: BuddyVerdict | null
+      /** 換新 session 的交接流程階段 */
+      phase: HandoffPhase
+      /** 小模型詢問進行中（此時不套用後備按鈕規則） */
+      asking: boolean
     }
   }
 }

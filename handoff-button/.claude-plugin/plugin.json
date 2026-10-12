@@ -1,9 +1,0 @@
-{
-  "name": "handoff-button",
-  "version": "0.1.0",
-  "description": "context 用到 70% 時，在輸入框上方出現「交接」按鈕：寫交接摘要、存檔、清空對話並把摘要當新對話第一句送出",
-  "types": "./types/index.d.ts",
-  "author": {
-    "name": "ChengHung"
-  }
-}

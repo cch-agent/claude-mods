@@ -10,11 +10,6 @@
       "description": "grill-with-docs 的提問改用 AskUserQuestion 選擇題"
     },
     {
-      "name": "handoff-button",
-      "source": "./handoff-button",
-      "description": "context 70% 時出現交接按鈕：寫摘要、存檔、清空並送出"
-    },
-    {
       "name": "ship",
       "source": "./ship",
       "description": "/ship：驗證、獨立 review、確認 commit 訊息後 commit 並 push"
