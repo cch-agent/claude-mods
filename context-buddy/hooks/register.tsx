@@ -3,8 +3,8 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { BuddyVerdict, HandoffPhase } from '../types'
 
+// 每個「收尾段落且 context >= 此值」都詢問一次小模型（詢問中不重入）
 const ASK_FROM_PERCENT = 50
-const ASK_EVERY_SEGMENTS = 3
 const MODEL = 'haiku'
 const MAX_ANSWER_CHARS = 800
 const MAX_TIP_CHARS = 30
@@ -80,8 +80,9 @@ export function isWrapUp(e: { reason: string; answer: string }): boolean {
   return !OPEN_RE.test(text.replace(NO_OPEN_RE, ''))
 }
 
-export function shouldAsk(pct: number, segmentsSinceAsk: number): boolean {
-  return pct >= ASK_FROM_PERCENT && segmentsSinceAsk >= ASK_EVERY_SEGMENTS
+/** 收尾段落（呼叫端已確認）且 context 達門檻就詢問 */
+export function shouldAsk(pct: number): boolean {
+  return pct >= ASK_FROM_PERCENT
 }
 
 export function buildPrompt(answer: string, pct: number): string {
@@ -253,7 +254,6 @@ async function handoff($: EngineInterface, path: string, summary: string) {
 
 export const register: Register = on => {
   let pendingPath: string | null = null
-  let segmentsSinceAsk = ASK_EVERY_SEGMENTS // 第一個符合條件的段落即可詢問
   let isAsking = false
   // 按鈕按下後、pendingPath 設定前的同步旗標，擋住連按（第一個 await 之前就要設）
   let isStarting = false
@@ -269,7 +269,6 @@ export const register: Register = on => {
     epoch += 1
     pendingPath = null
     isAsking = false
-    segmentsSinceAsk = ASK_EVERY_SEGMENTS
   }
 
   on('session.start', async ($, e, next) => {
@@ -326,11 +325,9 @@ export const register: Register = on => {
     const done = isWrapUp(e)
     let ask: { answer: string; pct: number; epoch: number } | null = null
     if (done) {
-      segmentsSinceAsk += 1
       const pct = await read($, percent)
-      if (!isAsking && shouldAsk(pct, segmentsSinceAsk)) {
+      if (!isAsking && shouldAsk(pct)) {
         isAsking = true
-        segmentsSinceAsk = 0
         ask = { answer: e.answer, pct, epoch }
         // asking 要在 wrapUp 之前（或同批）寫入，避免 verdict=null / asking=false / wrapUp=true 的過渡態讓按鈕閃現
         await update($, asking, () => true)

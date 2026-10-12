@@ -4,7 +4,7 @@ Claude Code mods（hooks plugins）。
 
 - `grill-choices`：`/grill-with-docs` 的提問改成 AskUserQuestion 選擇題，可自行輸入。
 - `ship`：`/ship [補充說明]`，驗證 → 獨立 sonnet code-review → 確認 commit 訊息 → commit → push。
-- `context-buddy`：Claude 娃娃，常駐輸入框上方，依 context 用量說話；段落結束且用量偏高時用 haiku 判斷；適合開新 session 時顯示「換新 session」按鈕，自動寫交接摘要、/clear 並送出接續 prompt。已取代 `handoff-button`。
+- `context-buddy`：Claude 娃娃，常駐輸入框上方，依 context 用量說話；每個「收尾段落且用量 ≥50%」都用 haiku 判斷一次（依下一份工作與目前脈絡）；適合開新 session 時顯示「換新 session」按鈕，自動寫交接摘要、/clear 並送出接續 prompt。已取代 `handoff-button`。
 
 ## 安裝
 

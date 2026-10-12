@@ -5,7 +5,7 @@
   自然語言：commit and push、code-review 後 commit、新 session 前先記錄進度）。
 - 決定新增兩個 mod：
   - `claude-buddy`：輸入框上方的 Claude 娃娃，依 context % 說話；段落結束且 ≥50% 時以小模型判斷是否建議開新 session。
-    省資源原則：不輪詢，只在 `session.measure` / `turn.complete` 更新；模型呼叫最多每 3 個段落一次、失敗退回本地規則。
+    省資源原則：不輪詢，只在 `session.measure` / `turn.complete` 更新；模型呼叫改為每個收尾且 ≥50% 的段落一次（詢問中不重入；原「每 3 段一次」已於 2026-10-12 取消）、失敗退回本地規則。
   - `ship`：`/ship` 指令，流程為獨立 sonnet code-review → 使用者確認 commit 訊息 → commit & push。
 - 假設：API 只提供 `AbovePrompt` band，視為「usage bar 下方」的實際位置。
 - 分工：兩個 sonnet 實作 agent 並行；實作完成後由另一個不同的 agent review，再 commit。
@@ -22,14 +22,14 @@
 - 待實機驗證：按鈕在 AbovePrompt 的排版（Box 內 Text + Button 同列）、detached `/clear` 後 `prompt.submit` 是否照常送出、與 handoff-button 同時存在時的外層／內層順序、detached `/clear` 觸發的 `session.end{reason:'clear'}` 會把 phase 重置為 idle（已確認不影響 OPENING 的 `prompt.submit`，之後 `update(phase,'idle')` 為冪等）。（已作廢：handoff-button 已移除）
 
 ## 2026-10-12（context-buddy：review 修正）
-- `/clear` 只觸發 `session.end{reason:'clear'}`、不觸發 `session.start`（d.ts SessionEndInput、reference.md）。新增 `session.end` hook 與 `session.start` 共用同一套重置：generation/epoch+1、pendingPath=null、isAsking=false、segmentsSinceAsk 還原、phase→idle、asking→false、清 verdict、wrapUp=false。
+- `/clear` 只觸發 `session.end{reason:'clear'}`、不觸發 `session.start`（d.ts SessionEndInput、reference.md）。新增 `session.end` hook 與 `session.start` 共用同一套重置：generation/epoch+1、pendingPath=null、isAsking=false、phase→idle、asking→false、清 verdict、wrapUp=false。
 - 熱重載後 atom 保留、閉包變數重置：重置不再依賴 pendingPath，phase 非 idle 一律改回 idle。
 - `epoch` 計數只在 session 邊界 +1：重置前發出的舊詢問收尾時不再動 isAsking／asking，避免誤關新一輪詢問的旗標；舊 verdict 仍由 generation 丟棄。
 - 按鈕連按：guard 通過後、第一個 await 前同步設 `isStarting`，finally 還原。
 - turn.complete：asking=true 先於 wrapUp 寫入，避免 verdict=null/asking=false/wrapUp=true 過渡態讓按鈕閃現。
 - 與 handoff-button 的反向重複觸發：buddy 進行中時狀態文字加註「（請勿再按『交接』）」；`hasText(below,'交接：')` 與其文案耦合（已於程式註解標明），handoff-button 未改。（已作廢：handoff-button 已移除）
 - handoff() 的 `update(phase,'clearing')` 與空摘要 toast 包 try/catch，避免 phase 卡 writing。
-- 設計取捨（不改行為）：後備規則（verdict 為 null + wrapUp + ≥75%）與「每 3 個收尾段落才詢問」並存。詢問間隔內（及詢問失敗、模型回壞資料時）verdict 為 null，≥75% 且該段落收尾就會顯示按鈕；也就是 ≥75% 時按鈕不依賴模型判斷，可能在「下一份工作仍與脈絡相關」時提示換新 session。取捨：高 context 時寧可多提示一次，也不讓使用者因模型沒被問到而錯過；按鈕只是建議、不自動執行。
+- 設計取捨（S4，已解決，見下方「每個收尾段落都詢問」）：後備規則（verdict 為 null + wrapUp + ≥75%）與「每 3 個收尾段落才詢問」並存。詢問間隔內（及詢問失敗、模型回壞資料時）verdict 為 null，≥75% 且該段落收尾就會顯示按鈕；也就是 ≥75% 時按鈕不依賴模型判斷，可能在「下一份工作仍與脈絡相關」時提示換新 session。取捨：高 context 時寧可多提示一次，也不讓使用者因模型沒被問到而錯過；按鈕只是建議、不自動執行。
 - 測試：47 項通過。變異驗證：移除 session.end 重置 → 3 項失敗；session.start 改回依賴 pendingPath → 1 項失敗；移除 isStarting → 雙擊測試失敗；移除 epoch 判斷 → 1 項失敗；移除交接分支 wrapUp 重置 → 1 項失敗。
 
 ## 2026-10-12（移除 handoff-button，併入 context-buddy）
@@ -40,3 +40,10 @@
 
 - context-buddy 版本升為 0.2.0（功能大幅變更，避免快取的 0.1.0 不更新）。
 - 建議補測（低優先）：phase≠idle 時 onPress 直接返回（目前拿掉該行測試仍全過）。
+
+## 2026-10-12（context-buddy：每個收尾段落都詢問）
+- 需求：「到一個段落，且目前 context＋下一份工作適合開新 session，才顯示按鈕」。原「每 3 個收尾段落詢問一次」使其餘段落只靠後備規則（不評估下一份工作），50–74% 的中間段落完全無判斷。
+- 改動：移除 `ASK_EVERY_SEGMENTS` 與 `segmentsSinceAsk` 計數器；`shouldAsk(pct)` 只看 `pct >= 50`，呼叫端以 `isWrapUp` 把關，每個「收尾且 ≥50%」段落詢問一次。`isAsking` 防重入、`generation` 丟棄過期結果、`epoch`（舊詢問收尾不動新旗標）、session.end/start 重置、`asking` atom 皆保留。
+- 後備規則（verdict=null + wrapUp + ≥75% + 非詢問中）語意不變，現在只在模型失敗／回壞資料／逾時／結果被丟棄時才會生效。S4 取捨因此解決。
+- 已知殘餘：詢問進行中又到來的收尾段落會被略過（不重入），該段落若舊詢問結果被 generation 丟棄，則只剩後備規則（≥75%）；成本控制優先，維持現狀。
+- 成本控制未變：僅主執行緒 turn.complete、<50% 與非收尾段落不問、交接回合不問、不輪詢；haiku／effort low／maxTokens 200／timeout 20s。

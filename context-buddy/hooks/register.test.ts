@@ -34,11 +34,10 @@ test('段落判斷：收尾字樣、待辦語氣、非 answer', () => {
   expect(isWrapUp({ reason: 'error', answer: '已完成' })).toBe(false)
 })
 
-test('詢問頻率：>=50% 且距上次 >=3 個段落', () => {
-  expect(shouldAsk(49, 3)).toBe(false)
-  expect(shouldAsk(50, 2)).toBe(false)
-  expect(shouldAsk(50, 3)).toBe(true)
-  expect(shouldAsk(90, 5)).toBe(true)
+test('詢問門檻：>=50% 即詢問，無段落間隔', () => {
+  expect(shouldAsk(49)).toBe(false)
+  expect(shouldAsk(50)).toBe(true)
+  expect(shouldAsk(90)).toBe(true)
 })
 
 test('提示詞：答覆截到 800 字且含百分比與 JSON 格式要求', () => {
@@ -226,25 +225,60 @@ async function drawn($: any) {
   return t
 }
 
-test('節流：連續多個收尾段落只呼叫模型 1 次', async ($, on) => {
+test('詢問：每個收尾且 >=50% 的段落各呼叫模型 1 次（結果回來後才可再問）', async ($, on) => {
   const m = deferredModel(on)
   await setup($, on, 65)
-  for (let i = 0; i < 3; i++) await $.turn.complete(turn('已完成。'))
+  for (let i = 0; i < 3; i++) {
+    await $.turn.complete(turn('已完成。'))
+    await flush()
+    expect(m.calls).toBe(i + 1)
+    m.resolvers[i]!(REPLY('提示'))
+    await flush()
+  }
+})
+
+test('詢問：邊界 50% 會問', async ($, on) => {
+  const m = deferredModel(on)
+  await setup($, on, 50)
+  await $.turn.complete(turn('已完成。'))
   await flush()
   expect(m.calls).toBe(1)
 })
 
-test('節流：詢問進行中不重入，結束後才可再問', async ($, on) => {
+test('詢問：詢問進行中不重入，結束後下一個收尾段落才再問', async ($, on) => {
   const m = deferredModel(on)
   await setup($, on, 65)
   for (let i = 0; i < 4; i++) await $.turn.complete(turn('已完成。'))
   await flush()
-  expect(m.calls).toBe(1) // 第 4 段已達間隔，但仍在詢問中
+  expect(m.calls).toBe(1) // 後 3 段仍在詢問中，略過
   m.resolvers[0]!(REPLY('甲'))
   await flush()
   await $.turn.complete(turn('已完成。'))
   await flush()
   expect(m.calls).toBe(2)
+})
+
+test('詢問：非收尾段落不問（即使 >=50%）', async ($, on) => {
+  const m = deferredModel(on)
+  await setup($, on, 80)
+  for (const a of ['接下來還要處理 B。', '要不要繼續？', '尚未完成。']) await $.turn.complete(turn(a))
+  await flush()
+  expect(m.calls).toBe(0)
+})
+
+test('詢問失敗後下一個收尾段落仍會再問，且該段落退回後備規則', async ($, on) => {
+  let calls = 0
+  on('model.complete', () => {
+    calls += 1
+    return { value: { isAnswered: false, reason: 'api-error', status: 500, usage: {} } } as never
+  })
+  await setup($, on, 80)
+  await $.turn.complete(turn('已完成。'))
+  await flush()
+  await $.turn.complete(turn('又完成了。'))
+  await flush()
+  expect(calls).toBe(2)
+  expect(await offered($)).toBe(true) // 後備：wrapUp 且 >=75%
 })
 
 test('<50% 不詢問', async ($, on) => {
@@ -278,22 +312,18 @@ test('晚到的結果：新一輪非收尾段落之後丟棄', async ($, on) => 
   expect(await drawn($)).not.toContain('過期提示')
 })
 
-test('verdict 只對發出詢問的段落有效：下一個收尾段落不沿用舊 tip', async ($, on) => {
-  let calls = 0
-  on('model.complete', () => {
-    calls += 1
-    return REPLY('舊提示')
-  })
+test('verdict 只對發出詢問的段落有效：下一段落開始即作廢，不沿用舊 tip', async ($, on) => {
+  const m = deferredModel(on)
   await setup($, on, 65)
   await $.turn.complete(turn('已完成。'))
+  m.resolvers[0]!(REPLY('舊提示'))
   await flush()
   expect(await drawn($)).toContain('舊提示')
-  await $.turn.complete(turn('又完成了。')) // 間隔未到，不詢問
+  await $.turn.complete(turn('又完成了。')) // 新詢問進行中（尚未回覆）
   await flush()
-  expect(calls).toBe(1)
+  expect(m.calls).toBe(2)
   const t = await drawn($)
   expect(t).not.toContain('舊提示')
-  expect(t).toContain('這段告一段落了，適合現在收尾。')
 })
 
 // ---------- 換新 session 按鈕與交接流程 ----------
