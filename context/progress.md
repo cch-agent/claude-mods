@@ -47,3 +47,12 @@
 - 後備規則（verdict=null + wrapUp + ≥75% + 非詢問中）語意不變，現在只在模型失敗／回壞資料／逾時／結果被丟棄時才會生效。S4 取捨因此解決。
 - 已知殘餘：詢問進行中又到來的收尾段落會被略過（不重入），該段落若舊詢問結果被 generation 丟棄，則只剩後備規則（≥75%）；成本控制優先，維持現狀。
 - 成本控制未變：僅主執行緒 turn.complete、<50% 與非收尾段落不問、交接回合不問、不輪詢；haiku／effort low／maxTokens 200／timeout 20s。
+
+## 2026-10-13（新增 action-chips）
+- 需求：回覆後在輸入框上方顯示小框框；要使用者開啟的檔案／網址點了開啟，指令點了複製；每次回覆後更新或清空；依回覆順序由左至右、過長換行；標籤寫「這是什麼」而非檔名（例：web demo、mobile demo）。
+- 做法：`turn.complete`（只看主執行緒）從 `e.answer` 抽取 → 路徑需 `$.fs.stat` 存在才收 → 先放備用標籤（檔名／指令開頭），再用 haiku（effort low、timeout 4s）寫描述性標籤；逾時或失敗就留備用標籤。最多 12 個。
+- 抽取規則：sh/bash/zsh/shell/console 的 code fence 整塊算一個指令；無語言的 fence 需第一行像指令；行內只收 `! ` 開頭的指令（一般的 `pnpm test` 不收，避免把提到的指令名都做成框）；網址只收 ASCII、括號平衡；路徑去掉 `:12-20`、`#L5`、`#章節`。
+- 安全：可執行副檔名（.app/.command/.sh…）用 `open -R` 只在 Finder 顯示。
+- 中斷（isAborted）清空；回覆進行中（isWorking）隱藏；與 context-buddy 相同以 `next(e)` 組合下層 band，小框框在上。
+- 獨立 sonnet review 的高／中項已修；未做：兩輪 target 完全相同時舊標籤可能套用到新結果（影響小）、未閉合 code fence、巢狀 fence。
+- 測試 4 項通過。
