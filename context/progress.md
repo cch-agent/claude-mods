@@ -98,3 +98,8 @@
 - 留待第 3 階段：`pickActiveSpec` 比照 parseSpec 檢查 id 等於檔名。
 - 待實機驗證（`claude --plugin-dir system1` 新 session）：grilling／grill-with-docs 收尾只出現一次、planner 可呼叫 submit_plan、前景執行與摘要、首次建立 context/specs、confirm 對話框與 status、狀態列前綴只一次。
 - 使用者要求：拆題觸發改為 skill 名稱含 `grill` 或 `plan`（不分大小寫）；同一回合只附加一次（`prompt.submit` 重設旗標）。README 補上第 2 階段說明。
+
+## 2026-10-13（system1 暫停於第 2 階段）
+- 0.2.0 已出貨（804d44e），實機驗證 5 項通過。使用者決定先使用第 2 階段一陣子再進第 3 階段。
+- 第 3 階段開工前：請使用者提供 simple design 規則清單，逐條分為程式／Jev／agent 判斷；`pickActiveSpec` 補 id 等於檔名檢查。
+- 使用期間值得留意：`plan` 觸發範圍是否過廣、planner 拆題品質、Jev 三題的誤判（可作第 4 階段校準素材）。
