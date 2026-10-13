@@ -18,6 +18,11 @@
       "name": "action-chips",
       "source": "./action-chips",
       "description": "回覆後在輸入列上方顯示小框框：檔案與網址點了開啟、指令點了複製"
+    },
+    {
+      "name": "system1",
+      "source": "./system1",
+      "description": "用 System One 模型（目前 TypeSafe Jev）做判斷的 hook：派 sub-agent 前自動選 model，可開關"
     }
   ],
   "metadata": {

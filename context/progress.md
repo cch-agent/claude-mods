@@ -68,3 +68,22 @@
 
 ## 2026-10-13（加入 MIT LICENSE 並改為 public）
 - 公開前掃描：無 secret／token／真實絕對路徑；已知 git 作者 email 會公開（使用者接受）。加入 MIT LICENSE（版權 ChengHung, 2026）。
+
+## 2026-10-13（新增 system1）
+- 需求：把用 Jev 做的判斷集中成可開關的 skill（後端目前為 TypeSafe Jev；`/plugin disable system1@cch` / `enable`）。
+- 做法：plugin + skill（`system1/skills/system1/SKILL.md`）；`pick-model.py` 從 `~/.claude/scripts` 搬入 `system1/skills/system1/scripts/`（原檔已刪）；API key 留在 `~/.claude/settings.json` 的 env，不入 repo。
+- （已被 hook 版取代；CLAUDE.md 最終只保留模型分級作為退路）
+- 需 push 後執行 `/plugin marketplace update cch` + `/plugin install system1@cch` 才生效。
+- 改名：原名 `jev`，改為 `system1`——toggle 代表「是否用 System One 模型判斷」，後端目前是 Jev，之後可能換；換後端只改 scripts 與 SKILL.md 的「目前後端」，輸出介面不變。
+
+## 2026-10-13（system1 改為 hook）
+- 改用 hook 的原因：skill 版靠模型自己想到要呼叫，不一定觸發、要佔 context、還得在 CLAUDE.md 寫規則；hook 掛在 `tool.call`（Agent）上，必定觸發、不佔 context、不需 CLAUDE.md 規則。`system1/skills/` 與 `pick-model.py` 已刪除。
+- 做法：`system1/hooks/register.ts`，`on('tool.call', { tool: 'Agent' })`。`subagent_type === 'fork'` 略過；API key 由 `$.env.get('TYPESAFE_API_KEY')` 讀（沒有就不動）；一次請求平行問 5 題 Noul（state = description + prompt 前 6000 字，instructions 引用 `` `prompt` ``），`$.http.fetch` 逾時 3 秒（HttpInit 無 timeout，用 `$.clock.sleep` + Promise.race）。
+- 五題：needs_architecture（架構／取捨）、needs_deep_reasoning（深度分析／多步推理）、design_settled（已定案照規格做）、modifies_code（寫／改程式碼、測試或審查）、lookup_or_chore（查找／格式化／重複性操作）。
+- 組合規則（`decideModel`，已 export 測試）：max(架構, 深度推理) ≥ 0.65 且 design_settled < 0.65 → opus；否則 lookup_or_chore ≥ 0.65 且 modifies_code ≤ 0.35 → haiku；否則 modifies_code ≥ 0.65 或 design_settled ≥ 0.65 → sonnet；其餘不覆寫。不確定帶 (0.35, 0.65)：只檢查該分支用到的題目，落入就回 null（不覆寫）。
+- 失敗退路：沒 key、網路錯誤、非 2xx、JSON 壞、欄位缺、逾時、hook 自身例外（`.catch`）一律 `next(e)` 不動，不拋錯；不記錄 headers／key。status 顯示 `system1: <model>（原 …）` 或 `system1: 保留 <原值|未指定>`。
+- 實測（真實 API）：架構規劃 → opus；照規格實作加測試 → sonnet；搜尋 repo TODO → haiku。
+- 已知限制：無法分辨使用者明確指定的 model（會被覆寫）；需要時停用 plugin（`/plugin disable system1@cch`）。
+- 後續階段：2) `/plan` 指令產出拆題檔（四層把關：prompt 定義原子、程式檢查格式、Jev 檢查每條、使用者確認）；3) 偏離檢查與 review hook + D 的 skill；4) 記錄 Jev 答案與後續結果供校準。
+- 決定：`decideModel` 維持保守設計——某分支的關鍵題一落在不確定帶就回 null、不往下走（例：needs_architecture 0.5 + modifies_code 0.9 → null）。null 會保留主 session 依分級填好的 model，本身就是合理退路；測試已鎖住。
+- 逾時等待同時綁 `next.signal`，使用者中斷時一起結束；fetch 無法取消，只是不再等它。

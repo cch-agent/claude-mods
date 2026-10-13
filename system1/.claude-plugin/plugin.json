@@ -1,0 +1,8 @@
+{
+  "name": "system1",
+  "version": "0.1.0",
+  "description": "用 System One 模型（目前 TypeSafe Jev）做判斷的 hook：派 sub-agent 前自動決定 model（需 TYPESAFE_API_KEY，停用 plugin 即關閉）",
+  "author": {
+    "name": "ChengHung"
+  }
+}
